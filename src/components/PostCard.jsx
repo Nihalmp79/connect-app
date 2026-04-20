@@ -2,10 +2,12 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { usePosts } from "../context/PostContext"
 import { useAuth } from "../context/AuthContext"
+import { useToast } from "../context/ToastContext"
 
 const PostCard = ({ post }) => {
   const { toggleLike, deletePost, addComment } = usePosts()
   const { user } = useAuth()
+  const { success, error } = useToast()
   const navigate = useNavigate()
   const [comment, setComment] = useState("")
   const [showComments, setShowComments] = useState(false)
@@ -14,23 +16,34 @@ const PostCard = ({ post }) => {
   const isLiked = post.likes.some(l => l.userId === user?.id)
   const isOwner = post.userId === user?.id
 
-  const handleLike = async (e) => {
+   const handleLike = async (e) => {
     e.stopPropagation()
-    await toggleLike(post.id, user?.id)
+    const result = await toggleLike(post.id, user?.id)
+    if (!result.success) error("Failed to like post")
   }
 
-  const handleDelete = async (e) => {
+ const handleDelete = async (e) => {
     e.stopPropagation()
-    await deletePost(post.id)
+    const result = await deletePost(post.id)
+    if (result.success) {
+      success("Post deleted")
+    } else {
+      error("Failed to delete post")
+    }
   }
 
   const handleComment = async (e) => {
     e.preventDefault()
     if (!comment.trim()) return
     setLoading(true)
-    await addComment(post.id, comment)
-    setComment("")
+    const result = await addComment(post.id, comment)
     setLoading(false)
+    if (result.success) {
+      setComment("")
+      success("Comment added")
+    } else {
+      error("Failed to add comment")
+    }
   }
 
   return (

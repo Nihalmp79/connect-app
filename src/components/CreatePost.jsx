@@ -1,9 +1,11 @@
 import { useState } from "react"
 import { usePosts } from "../context/PostContext"
 import { useAuth } from "../context/AuthContext"
+import { useToast } from "../context/ToastContext"
 
 const CreatePost = () => {
   const [content, setContent] = useState("")
+  const { success , error} = useToast()
   const [image, setImage] = useState("")
   const [loading, setLoading] = useState(false)
   const { createPost } = usePosts()
@@ -13,10 +15,16 @@ const CreatePost = () => {
     e.preventDefault()
     if (!content.trim()) return
     setLoading(true)
-    await createPost(content, image || null)
-    setContent("")
-    setImage("")
+    const result = await createPost(content, image || null)
     setLoading(false)
+    if(result.success){
+      setContent("")
+      setImage("")
+      success("Post created!")
+    } else {
+      error("Failed to create post")
+    }
+   
   }
 
   return (

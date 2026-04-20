@@ -3,10 +3,12 @@ import { useParams } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import PostCard from "../components/PostCard"
 import { usePosts } from "../context/PostContext"
+import { useToast } from "../context/ToastContext"
 
 const BASE_URL = "http://localhost:5002"
 
 const Profile = () => {
+  const { success, error} = useToast()
   const { username } = useParams()
   const { user, token } = useAuth()
   const { posts } = usePosts()
@@ -58,6 +60,7 @@ const Profile = () => {
             : prev._count.followers - 1
         }
       }))
+      success(data.following ? `Following ${profile.username}` : `Unfollowed ${profile.username}`)
     } catch (err) {
       console.error(err)
     }
