@@ -1,20 +1,22 @@
 import { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
-import PostCard from "../components/PostCard"
-import { usePosts } from "../context/PostContext"
 import { useToast } from "../context/ToastContext"
+import PostCard from "../components/PostCard"
+import EditProfile from "../components/EditProfile"
+import { usePosts } from "../context/PostContext"
 
 const BASE_URL = "http://localhost:5002"
 
 const Profile = () => {
-  const { success, error} = useToast()
   const { username } = useParams()
   const { user, token } = useAuth()
+  const { success, error } = useToast()
   const { posts } = usePosts()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [isFollowing, setIsFollowing] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
 
   const userPosts = posts.filter(p => p.user.username === username)
   const isOwnProfile = user?.username === username
@@ -28,7 +30,6 @@ const Profile = () => {
         const data = await response.json()
         setProfile(data)
 
-        // check if current user follows this profile
         const followRes = await fetch(`${BASE_URL}/users/${data.id}/followers`, {
           headers: { Authorization: `Bearer ${token}` }
         })
@@ -60,10 +61,17 @@ const Profile = () => {
             : prev._count.followers - 1
         }
       }))
-      success(data.following ? `Following ${profile.username}` : `Unfollowed ${profile.username}`)
+      success(data.following
+        ? `Following ${profile.username}`
+        : `Unfollowed ${profile.username}`
+      )
     } catch (err) {
-      console.error(err)
+      error("Failed to follow user")
     }
+  }
+
+  const handleProfileUpdate = (updatedUser) => {
+    setProfile(prev => ({ ...prev, ...updatedUser }))
   }
 
   if (loading) return (
@@ -86,17 +94,48 @@ const Profile = () => {
         <div className="bg-white border border-gray-200 rounded-lg p-6 mb-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 font-bold text-2xl">
+
+              {/* Avatar */}
+              <div className="w-16 h-16 rounded-full overflow-hidden bg-blue-100 flex items-center justify-center flex-shrink-0">
+                {profile.avatar ? (
+                  <img
+                    src={profile.avatar}
+                    alt="avatar"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = "none"
+                      e.target.nextSibling.style.display = "flex"
+                    }}
+                  />
+                ) : null}
+                <span
+                  className="text-blue-600 font-bold text-2xl"
+                  style={{ display: profile.avatar ? "none" : "flex" }}
+                >
                   {profile.username[0].toUpperCase()}
                 </span>
               </div>
+
               <div>
                 <h1 className="text-xl font-bold text-gray-900">{profile.username}</h1>
-                {profile.bio && <p className="text-gray-500 text-sm mt-1">{profile.bio}</p>}
+                {profile.bio && (
+                  <p className="text-gray-500 text-sm mt-1">{profile.bio}</p>
+                )}
+                {!profile.bio && isOwnProfile && (
+                  <p className="text-gray-300 text-sm mt-1 italic">Add a bio...</p>
+                )}
               </div>
             </div>
-            {!isOwnProfile && (
+
+            {/* Action button */}
+            {isOwnProfile ? (
+              <button
+                onClick={() => setShowEdit(true)}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition duration-200"
+              >
+                Edit profile
+              </button>
+            ) : (
               <button
                 onClick={handleFollow}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition duration-200 ${
@@ -130,11 +169,27 @@ const Profile = () => {
         {/* Posts */}
         <h2 className="text-lg font-bold text-gray-900 mb-3">Posts</h2>
         {userPosts.length === 0 ? (
-          <p className="text-gray-400 text-center py-8">No posts yet</p>
+          <div className="text-center py-12">
+            <p className="text-gray-400 text-lg">No posts yet</p>
+            {isOwnProfile && (
+              <p className="text-gray-300 text-sm mt-1">
+                Share your first post from the home page
+              </p>
+            )}
+          </div>
         ) : (
           userPosts.map(post => <PostCard key={post.id} post={post} />)
         )}
       </div>
+
+      {/* Edit profile modal */}
+      {showEdit && (
+        <EditProfile
+          profile={profile}
+          onClose={() => setShowEdit(false)}
+          onUpdate={handleProfileUpdate}
+        />
+      )}
     </div>
   )
 }

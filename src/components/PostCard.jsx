@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { usePosts } from "../context/PostContext"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "../context/ToastContext"
+import { timeAgo } from "../utils/timeago"
 
 const PostCard = ({ post }) => {
   const { toggleLike, deletePost, addComment } = usePosts()
@@ -62,7 +63,7 @@ const PostCard = ({ post }) => {
           <div>
             <p className="font-medium text-gray-900 text-sm">{post.user.username}</p>
             <p className="text-gray-400 text-xs">
-              {new Date(post.createdAt).toLocaleDateString()}
+              {timeAgo(post.createdAt)}
             </p>
           </div>
         </button>
