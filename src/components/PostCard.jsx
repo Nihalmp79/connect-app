@@ -48,7 +48,7 @@ const PostCard = ({ post }) => {
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <button
@@ -61,8 +61,8 @@ const PostCard = ({ post }) => {
             </span>
           </div>
           <div>
-            <p className="font-medium text-gray-900 text-sm">{post.user.username}</p>
-            <p className="text-gray-400 text-xs">
+            <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">{post.user.username}</p>
+            <p className="text-gray-400 dark:text-gray-500 text-xs">
               {timeAgo(post.createdAt)}
             </p>
           </div>
@@ -79,7 +79,7 @@ const PostCard = ({ post }) => {
 
       {/* Content */}
       <p
-        className="text-gray-800 mb-3 cursor-pointer"
+        className="text-gray-800 dark:text-gray-200 mb-3 cursor-pointer"
         onClick={() => navigate(`/posts/${post.id}`)}
       >
         {post.content}
@@ -121,7 +121,7 @@ const PostCard = ({ post }) => {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Write a comment..."
-              className="flex-1 border border-gray-200 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <button
               type="submit"
@@ -138,9 +138,9 @@ const PostCard = ({ post }) => {
                   {c.user.username[0].toUpperCase()}
                 </span>
               </div>
-              <div className="bg-gray-50 rounded-lg px-3 py-2 flex-1">
-                <p className="font-medium text-xs text-gray-900">{c.user.username}</p>
-                <p className="text-sm text-gray-700">{c.content}</p>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 flex-1">
+                <p className="font-medium text-xs text-gray-900 dark:text-gray-100">{c.user.username}</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">{c.content}</p>
               </div>
             </div>
           ))}
