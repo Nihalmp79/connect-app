@@ -7,15 +7,53 @@ const initialState = {
   posts: [],
   feedPosts: [],
   loading: true,
-  error: null
+  error: null,
+  // pagination state
+  postsPage: 1,
+  feedPage: 1,
+  hasMorePosts: true,
+  hasMoreFeed: true,
+  loadingMore: false
 }
 
 const reducer = (state, action) => {
   switch (action.type) {
     case "FETCH_SUCCESS":
-      return { ...state, posts: action.payload, loading: false, error: null }
+      return {
+        ...state,
+        posts: action.payload.posts,
+        hasMorePosts: action.payload.hasMore,
+        postsPage: 1,
+        loading: false,
+        error: null
+      }
     case "FETCH_FEED_SUCCESS":
-      return { ...state, feedPosts: action.payload, loading: false, error: null }
+      return {
+        ...state,
+        feedPosts: action.payload.posts,
+        hasMoreFeed: action.payload.hasMore,
+        feedPage: 1,
+        loading: false,
+        error: null
+      }
+    case "LOAD_MORE_POSTS":
+      return {
+        ...state,
+        posts: [...state.posts, ...action.payload.posts],
+        hasMorePosts: action.payload.hasMore,
+        postsPage: state.postsPage + 1,
+        loadingMore: false
+      }
+    case "LOAD_MORE_FEED":
+      return {
+        ...state,
+        feedPosts: [...state.feedPosts, ...action.payload.posts],
+        hasMoreFeed: action.payload.hasMore,
+        feedPage: state.feedPage + 1,
+        loadingMore: false
+      }
+    case "SET_LOADING_MORE":
+      return { ...state, loadingMore: true }
     case "FETCH_ERROR":
       return { ...state, error: action.payload, loading: false }
     case "ADD_POST":
@@ -77,36 +115,83 @@ export const PostProvider = ({ children }) => {
     "Authorization": `Bearer ${localStorage.getItem("token")}`
   }), [])
 
-  // fetch all posts
+  // fetch first page of all posts
   const fetchPosts = useCallback(async () => {
     try {
-      const response = await fetch(`${BASE_URL}/posts`, { headers: getHeaders() })
+      const response = await fetch(`${BASE_URL}/posts?page=1&limit=10`, {
+        headers: getHeaders()
+      })
       if (!response.ok) throw new Error("Failed to fetch")
       const data = await response.json()
-      dispatch({ type: "FETCH_SUCCESS", payload: data })
+      dispatch({
+        type: "FETCH_SUCCESS",
+        payload: { posts: data.posts, hasMore: data.pagination.hasMore }
+      })
     } catch (err) {
       dispatch({ type: "FETCH_ERROR", payload: "Cannot connect to server" })
     }
   }, [getHeaders])
 
-  // fetch feed posts
+  // fetch first page of feed
   const fetchFeed = useCallback(async () => {
     try {
-      const response = await fetch(`${BASE_URL}/posts/feed`, { headers: getHeaders() })
+      const response = await fetch(`${BASE_URL}/posts/feed?page=1&limit=10`, {
+        headers: getHeaders()
+      })
       if (!response.ok) throw new Error("Failed to fetch feed")
       const data = await response.json()
-      dispatch({ type: "FETCH_FEED_SUCCESS", payload: data })
+      dispatch({
+        type: "FETCH_FEED_SUCCESS",
+        payload: { posts: data.posts, hasMore: data.pagination.hasMore }
+      })
     } catch (err) {
       dispatch({ type: "FETCH_ERROR", payload: "Cannot connect to server" })
     }
   }, [getHeaders])
+
+  // load more posts — next page
+  const loadMorePosts = useCallback(async () => {
+    if (!state.hasMorePosts || state.loadingMore) return
+    dispatch({ type: "SET_LOADING_MORE" })
+    try {
+      const nextPage = state.postsPage + 1
+      const response = await fetch(`${BASE_URL}/posts?page=${nextPage}&limit=10`, {
+        headers: getHeaders()
+      })
+      const data = await response.json()
+      dispatch({
+        type: "LOAD_MORE_POSTS",
+        payload: { posts: data.posts, hasMore: data.pagination.hasMore }
+      })
+    } catch (err) {
+      console.error(err)
+    }
+  }, [state.hasMorePosts, state.loadingMore, state.postsPage, getHeaders])
+
+  // load more feed — next page
+  const loadMoreFeed = useCallback(async () => {
+    if (!state.hasMoreFeed || state.loadingMore) return
+    dispatch({ type: "SET_LOADING_MORE" })
+    try {
+      const nextPage = state.feedPage + 1
+      const response = await fetch(`${BASE_URL}/posts/feed?page=${nextPage}&limit=10`, {
+        headers: getHeaders()
+      })
+      const data = await response.json()
+      dispatch({
+        type: "LOAD_MORE_FEED",
+        payload: { posts: data.posts, hasMore: data.pagination.hasMore }
+      })
+    } catch (err) {
+      console.error(err)
+    }
+  }, [state.hasMoreFeed, state.loadingMore, state.feedPage, getHeaders])
 
   useEffect(() => {
     fetchPosts()
     fetchFeed()
   }, [])
 
-  // create post
   const createPost = useCallback(async (content, image) => {
     try {
       const response = await fetch(`${BASE_URL}/posts`, {
@@ -123,7 +208,6 @@ export const PostProvider = ({ children }) => {
     }
   }, [getHeaders])
 
-  // delete post
   const deletePost = useCallback(async (id) => {
     try {
       const response = await fetch(`${BASE_URL}/posts/${id}`, {
@@ -138,7 +222,6 @@ export const PostProvider = ({ children }) => {
     }
   }, [getHeaders])
 
-  // toggle like
   const toggleLike = useCallback(async (postId, userId) => {
     try {
       const response = await fetch(`${BASE_URL}/posts/${postId}/like`, {
@@ -154,7 +237,6 @@ export const PostProvider = ({ children }) => {
     }
   }, [getHeaders])
 
-  // add comment
   const addComment = useCallback(async (postId, content) => {
     try {
       const response = await fetch(`${BASE_URL}/posts/${postId}/comments`, {
@@ -177,8 +259,13 @@ export const PostProvider = ({ children }) => {
       feedPosts: state.feedPosts,
       loading: state.loading,
       error: state.error,
+      hasMorePosts: state.hasMorePosts,
+      hasMoreFeed: state.hasMoreFeed,
+      loadingMore: state.loadingMore,
       fetchPosts,
       fetchFeed,
+      loadMorePosts,
+      loadMoreFeed,
       createPost,
       deletePost,
       toggleLike,

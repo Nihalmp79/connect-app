@@ -27,6 +27,9 @@ const Navbar = () => {
               <Link to="/explore" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 transition duration-200 text-sm">
                 Explore
               </Link>
+              <Link to="/search" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 transition duration-200 text-sm">
+                Search
+              </Link>
               <Link
                 to={`/profile/${user?.username}`}
                 className="text-gray-600 dark:text-gray-300 hover:text-blue-600 transition duration-200 text-sm"

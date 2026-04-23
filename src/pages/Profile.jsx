@@ -5,6 +5,7 @@ import { useToast } from "../context/ToastContext"
 import PostCard from "../components/PostCard"
 import EditProfile from "../components/EditProfile"
 import { usePosts } from "../context/PostContext"
+import { ProfileSkeleton, PostSkeleton } from "../components/Skeleton"
 
 const BASE_URL = "http://localhost:5002"
 
@@ -75,8 +76,12 @@ const Profile = () => {
   }
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
-      <p className="text-gray-400 dark:text-gray-500">Loading profile...</p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        <ProfileSkeleton />
+        <PostSkeleton />
+        <PostSkeleton />
+      </div>
     </div>
   )
 
